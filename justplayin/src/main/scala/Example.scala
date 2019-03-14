@@ -2,8 +2,10 @@ package com.example
 
 import unfiltered.request._
 import unfiltered.response._
+import unfiltered.directives._
+import Directives._
 
-import unfiltered.directives._, Directives._
+import scala.collection.mutable
 
 class Printer {
   def echo(str: String) : Unit = println(str)
@@ -136,7 +138,11 @@ object ExampleApp {
       val po: Point = (60, 70, 80)
       println(po.getClass)
 
-      class PointC(val x: Int, val y: Int) {
+      class PointC(vx: Int, vy: Int) {
+        var x = vx
+        var y = vy
+        var sumNumber: Int = _
+
         println(x)
         def distance(that: PointC): Int = {
           val xdiff = math.abs(this.x - that.x)
@@ -149,7 +155,222 @@ object ExampleApp {
         println(y)
       }
 
-      new PointC(11, 12)
+      var point = new PointC(11, 12)
+      println(point.x)
+      println(point.y)
+      println(point.sumNumber)
+
+
+      abstract class Shape {
+        def draw(): Unit = {
+          println("不明な図形")
+        }
+      }
+
+      class Triangle extends Shape {
+        override def draw(): Unit = {
+          println("三角形")
+        }
+      }
+
+      class Rectangle extends Shape {
+        override def draw(): Unit = {
+          println ("四角形")
+        }
+      }
+
+      class UnknownShape extends Shape
+
+      var shape: Shape = new Triangle
+      shape.draw()
+      shape = new Rectangle
+      shape.draw()
+      shape = new UnknownShape
+      shape.draw()
+
+      trait Namable {
+        val name: String
+        def display(): Unit = println(name)
+      }
+
+      class Employee(val name:String) extends AnyRef with Namable
+
+      val taro = new Employee("太郎")
+      taro.display()
+
+      trait Enumerable[A] {
+        def foreach[B](fun: A => B):Unit
+
+        final def map[B](f:A => B):List[B] = {
+          var members = mutable.Buffer.empty[B]
+          foreach { m =>
+            members += f(m)
+          }
+          members.toList
+        }
+
+        final def filter(p:A => Boolean):List[A] = {
+          var members = mutable.Buffer.empty[A]
+          foreach { m =>
+            if(p(m)) members += m
+          }
+          members.toList
+        }
+
+        final def toList: List[A] = {
+          var members = mutable.Buffer.empty[A]
+          foreach { m =>
+            members += m
+          }
+          members.toList
+        }
+      }
+
+      case class Staff(val name: String, val age: Int)
+
+      class Shop(val name: String) extends AnyRef with Enumerable[Staff]with Namable {
+        private[this] val staffs: List[Staff] = List(new Staff("太郎", 18),
+          new Staff("花子", 20))
+
+        override def foreach[B](f:Staff => B):Unit = staffs.foreach(f)
+      }
+
+      val shop = new Shop("great shop")
+      println(shop.filter(_.age >= 20))
+      println(shop.map(_.name))
+      println(shop.toList)
+      shop.display()
+
+      object Foo extends Namable {
+        def foo(): Unit ={
+          println("foo")
+        }
+        val name = "aaa"
+      }
+
+      val namable : Namable = Foo
+      def displayName(namable: Namable) = namable.display()
+      displayName(shop)
+      displayName(Foo)
+      namable.display()
+
+      Foo.foo()
+
+      object Add{
+        def apply(x:Int,y:Int):Int=x+y
+      }
+
+      println(Add.apply(1,2))
+      println(Add(1,2))
+
+
+      class MyString (val content :String){
+        def unary_! : String = "!"+content
+      }
+      val s = new MyString("Taro")
+      println(!s)
+
+      case class CPoint(x: Int, y: Int)
+      val map = Map(CPoint(10, 10) -> 1, CPoint(20, 20) -> 2)
+      println(map(CPoint(10, 10)))
+      println(map(CPoint(20, 20)))
+
+      val cp = CPoint(3, 4)
+      cp match {
+        case CPoint(x, y) =>
+          println(x)
+          println(y)
+      }
+
+      val v = cp match {
+        case CPoint(3, _) => "OK"
+        case _ => "NOOOO!!!!"
+      }
+
+      println(v)
+
+      val ab = if(3 < 4) "a" else "b"
+      println(ab)
+
+      val abc = { println("hello");1+1}
+      println(abc)
+
+      def foo(): String = {
+        "foo" + "foo"
+      }
+
+      println(foo())
+
+      var ii = 1
+      val w = while ( ii <= 10){
+        println("ii = " + ii)
+        ii = ii + 1
+      }
+
+      println(w)
+
+      for(x <- 1 to 3; y <- 1 until 3 if x != y){
+        println("x =" + x + " y = " + y)
+      }
+
+      for( e <- List(1,2,3)) println(e)
+
+      println(for( e <- List(1,2,3)) yield {
+        e + 1
+      } )
+
+      val iii = 5
+      println(iii match {
+        case 0 => "A"
+        case _ => "VVV"
+      })
+
+      val list= List(1,2,3,4,5,6)
+      list match {
+        case List(a,b,c,d,e) =>
+        println(a,b,c,d,e)
+        case _ =>
+          println("?")
+      }
+
+      def reverse[A](list: List[A],result:List[A]):List[A] = list match {
+        case x::xs => reverse(xs,x::result)
+        case Nil => result
+      }
+
+      println(reverse(List(1,2,3), List(5)))
+
+      val lst = List("A","B","C","D","E")
+      lst match {
+        case List("A",b,c,d,e) if b != "B" =>
+          println("b=" + b)
+        case _ =>
+          println("nothing")
+      }
+
+      def last2[A](list: List[A]): A = list match {
+        case x::_::Nil => x
+        case x::xs => last2(xs)
+        case _ => sys.error("???")
+      }
+      println(last2(List(1,2,3,4,5)))
+
+      try {
+        throw new RuntimeException("Ex")
+      } catch {
+        case e: RuntimeException => println("GGG")
+        case e: Exception => println(e.getMessage)
+      }
+
+
+
+
+
+
+
+
+
+      val CPoint(x1, y1) = cp
 
       val isAlphanumeric = (str: String) => str.matches("[a-zA-Z0-9¥¥s]+")
       ResponseString(p + ", " + p2 + "," + name + d(21) + isAlphanumeric("p") + message)
@@ -165,7 +386,7 @@ object Server {
     unfiltered.jetty.Server.anylocal.context("/assets") {
       _.resources(new java.net.URL(getClass().getResource("/www/css"), "."))
     }.plan(ExampleApp.intent).run({ svr =>
-      unfiltered.util.Browser.open(svr.portBindings.head.url)
+      unfiltered.util.Browser.open(svr.portBindings.head.url + "/a/b")
     })
   }
 }
