@@ -19,6 +19,44 @@ trait C
 
 class C1 extends C with B with A {}
 class C2 extends A with B {}
+class Printer2(x: Int){
+  /* private */ def print(): Unit = println(x)
+}
+
+abstract class Super{
+//  final def foo: Unit = println("Foo")
+  def foo: Unit
+  protected def puts(message: String): Unit = {
+    println(message)
+  }
+}
+class Sub extends Super {
+  override final def foo: Unit = println("Sub")
+
+  def sub():Unit  = {
+    puts("sub()")
+    //m.puts("sub()")
+  }
+}
+class User {
+//  val m = new Super
+  // error
+  //m.puts("User")
+}
+class Cell[A](var value: A){
+  def put(newValue: A): Unit ={
+    value = newValue
+  }
+  def get: A = value
+}
+
+class Circle(x:Int, y:Int, radius: Int ){
+  lazy val area :Double = {
+   println("Circle")
+   radius * radius *math.Pi
+ }
+
+}
 
 //** unfiltered plan */
 object ExampleApp {
@@ -27,7 +65,104 @@ object ExampleApp {
 
   def multi(n: Int, m: Int) : Int = n * m
 
+  def factorial(n: Int): Int = {
+    def loop(m: Int, x: Int): Int = if (m == 0) {
+      x
+    } else {
+      loop(m - 1, x * m)
+    }
+    loop(n, 1)
+  }
+
+  implicit def intToBoolean(n: Int): Boolean = n != 0
+
+  class RichInt(val self: Int) {
+    def isPositive: Boolean = self > 0
+  }
+
+  implicit def enrichInt(self: Int): RichInt = new RichInt(self)
+
+  implicit class RichInt2(val self: Int) {
+    def isPositive2: Boolean = self > 0
+  }
+
+
   def intent = unfiltered.filter.Planify {
+    case Path(Seg("2-7"::rest)) =>
+      rest match {
+        case List("local-method", n) =>
+          val num = n.toInt
+          ResponseString(factorial(num).toString())
+        case other =>
+          ResponseString(other.mkString("/"))
+      }
+    case Path(Seg("2-8"::rest)) =>
+      rest match {
+        case List("access-default") =>
+          (new Printer2(1)).print()
+          ResponseString("")
+
+        case List("lazy") =>
+          val c = new Circle(0,0,5)
+          println("-------")
+          c.area
+          ResponseString(c.area.toString())
+
+        case other =>
+          ResponseString(other.mkString("/"))
+      }
+    case Path(Seg("2-9"::rest)) =>
+      rest match {
+        case List("generics") =>
+          val cell = new Cell[String]("Hello")
+          println(cell.get)
+          cell.put("World")
+          ResponseString(cell.get)
+
+
+        case other =>
+          ResponseString(other.mkString("/"))
+      }
+    case Path(Seg("2-11"::rest)) =>
+      rest match {
+        case List("anon-class") =>
+          new Thread {
+            override def run(): Unit = {
+              for (i <- 1 to 10) println(i)
+            }
+          }.start()
+          ResponseString("start thread...")
+        case other =>
+          ResponseString(other.mkString("/"))
+      }
+    case Path(Seg("2-12"::rest)) =>
+      rest match {
+        case List("implicit-conversion", n) =>
+          if (n.toInt) {
+            ResponseString("true")
+          } else {
+            ResponseString("false")
+          }
+        case List("extends-method", n) =>
+          ResponseString(n.toInt.isPositive.toString())
+        case other =>
+          ResponseString(other.mkString("/"))
+      }
+    case Path(Seg("2-14"::rest)) =>
+      rest match {
+        case List("implicit-parameter1", n) =>
+          implicit val context = n.toInt
+          def printContext(implicit ctx: Int): Int = {
+            ctx
+          }
+          ResponseString(printContext.toString)
+        case List("implicit-parameter2") =>
+          def sumInt(list: List[Int]): Int = list.foldLeft(0){ _ + _ }
+          ResponseString(sumInt(List(1,2,3,4)).toString)
+        case other =>
+          ResponseString(other.mkString("/"))
+      }
+
     case Path(Seg(p :: p2 :: Nil)) =>
       val name = "Scala"
 //      name = "Java"
