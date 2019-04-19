@@ -1,5 +1,7 @@
 package com.example
 
+import java.io.File
+
 import unfiltered.request._
 import unfiltered.response._
 import unfiltered.directives._
@@ -363,12 +365,167 @@ object ExampleApp {
       }
 
 
+      def factorial(n: Int): Int = {
+        def f(m: Int, x: Int): Int = if (m == 0) {
+          x
+        } else {
+          f(m - 1, x * m)
+        }
+        f(n, 1)
+      }
+
+      println(factorial(10))
+
+      class Printer2(x: Int) {
+        def print(): Unit = println(x)
+      }
+      new Printer2(1).print()
+
+      class Super {
+        final def foo: Unit = println("Foo")
+
+        protected def puts(message: String): Unit = {
+          println(message)
+        }
+      }
+
+      class Sub extends Super {
+        //override final def foo: Unit = println("Sub")
+
+        def sub(): Unit = {
+          puts("sub()")
+        }
+      }
+      new Sub().sub()
+      class User {
+        val m = new Super
+//        m.puts("user")
+      }
+
+      class Circle(x: Int, y: Int, radius: Int){
+        lazy val area: Double = {
+          println("面積を計算します")
+          radius * radius * math.Pi
+        }
+      }
+
+      val c = new Circle(0, 0, 5)
+      println("ざっきー")
+      println(c.area)
+      println(c.area)
 
 
+      abstract class Super2{
+        def foo:Unit
+      }
+
+      new Super2 {
+        override def foo: Unit = println("super 2")
+      }.foo
+
+      class Cell[A](var value: A) {
+        def put(newValue: A): Unit = {
+          value = newValue
+        }
+        def get: A = value
+      }
+
+      val cell = new Cell[String]("Hallo")
+      println(cell.get)
+      cell.put("World")
+      println(cell.get)
 
 
+      import com.example.mypackage._
 
+      hallo()
 
+//      new Thread {
+//        override def run(): Unit = {
+//          for(i <- 1 to 10) println(i)
+//        }
+//      }.start()
+
+      if (1) {
+        println("1 is true")
+      }
+      implicit def intToBoolean(n: Int): Boolean = n != 0
+
+      class RichInt(val self:Int) {
+        def isPositive: Boolean = self > 0
+      }
+      implicit def enrichInt(self: Int):RichInt = new RichInt(self)
+      println(1.isPositive)
+      println(0.isPositive)
+
+      implicit class RichInt2(val self: Int) {
+        def isPositive2: Boolean = self > 0
+      }
+      println(1.isPositive2)
+
+      def printContext(implicit ctx: Double): Unit = {
+        println(ctx)
+      }
+
+      def printContext2(implicit ctx: Double): Unit = {
+        printContext
+      }
+      implicit val context = 2.0
+      printContext2
+
+      def sumInt(list: List[Int]): Int = list.foldLeft(0) {
+        (x, y) => x + y
+      }
+      println(sumInt(List(1,2,3,4,5)))
+
+      def sumDouble(list: List[Double]): Double = list.foldLeft(0.0) {
+        (x, y) => x + y
+      }
+      println(sumDouble(List(1,2,3,4,5)))
+
+      def sumString(list: List[String]): String = list.foldLeft("") {
+        (x, y) => x + y
+      }
+      println(sumString(List("a", "b", "c")))
+
+      trait Adder[T] {
+        def zero: T
+        def plus(x: T, y: T): T
+      }
+      def sum[T](list: List[T])(implicit adder: Adder[T]): T = {
+        list.foldLeft(adder.zero) {
+          (x, y) => adder.plus(x, y)
+        }
+      }
+      implicit object IntAdder extends Adder[Int] {
+        def zero: Int = 0
+        def plus(x: Int, y: Int): Int = x + y
+      }
+      println(sum(List(1,2,3,4,5)))
+      implicit object StringAdder extends Adder[String] {
+        def zero: String = ""
+        def plus(x: String, y: String): String = x + y
+      }
+      println(sum(List("a", "b", "c")))
+
+//      val dir = new File("hoge").listFiles()
+//      dir.length
+
+      def myListFiles(directory: File): Option[Array[File]] = {
+        Option(directory.listFiles())
+      }
+      val directory = new File("not exist")
+      val maybeFiles = myListFiles(directory)
+      println(maybeFiles.map(_.length).getOrElse(-1))
+
+      // p.105
+      println(Option("hello"))
+      println(None)
+      println(Option(null))
+
+      def fileSize(file: File): Option[Long] =
+        if (file.exists()) Option(file.length()) else None
+      println(fileSize(new File("build.sbt")))
 
       val CPoint(x1, y1) = cp
 
@@ -390,3 +547,4 @@ object Server {
     })
   }
 }
+
