@@ -152,18 +152,172 @@ object ExampleApp {
       rest match {
         case List("implicit-parameter1", n) =>
           implicit val context = n.toInt
-          def printContext(implicit ctx: Int): Int = {
-            ctx
+          def printContext(implicit ctx: Int): Unit = {
+            println(ctx)
           }
-          ResponseString(printContext.toString)
-        case List("implicit-parameter2") =>
-          def sumInt(list: List[Int]): Int = list.foldLeft(0){ _ + _ }
-          ResponseString(sumInt(List(1,2,3,4)).toString)
+
+          printContext
+          ResponseString("")
+
+        case List("implicit-parameter2", n) =>
+          def printContext(implicit ctx: Int): Unit = {
+            println(ctx)
+          }
+          def printContext2(implicit ctx: Int): Unit = {
+            printContext
+          }
+
+          implicit val context = n.toInt * 2
+          printContext2
+          ResponseString("")
+
+        case List("implicit-parameter3") =>
+          def  sumInt(list: List[Int]): Int = list.foldLeft(0){
+            (x, y)=> x + y;
+          }
+
+          trait Adder[T]{
+            def zero: T
+            def plus(x: T, y: T): T
+          }
+
+          def sum[T](list: List[T])(adder: Adder[T]): T = {
+            list.foldLeft(adder.zero){(x, y) => adder.plus(x, y)
+            }
+          }
+
+          object IntAdder extends Adder[Int] {
+            def zero: Int = 0
+            def plus(x: Int, y: Int): Int = x + y
+          }
+
+          ResponseString(sum(List(1, 2, 3))(IntAdder).toString())
+
+        case "implicit-parameter4"::rest =>
+          trait Adder[T]{
+            def zero: T
+            def plus(x: T, y: T): T
+          }
+
+          def sum[T](list: List[T])(implicit adder: Adder[T]): T = {
+            list.foldLeft(adder.zero){(x, y) => adder.plus(x, y)
+            }
+          }
+
+          implicit object IntAdder extends Adder[Int] {
+            def zero: Int = 0
+            def plus(x: Int, y: Int): Int = x + y
+          }
+
+          implicit object StringAdder extends Adder[String] {
+            def zero: String = ""
+            def plus(x: String, y: String): String = x + y
+          }
+
+          ResponseString(sum(rest).toString())
         case other =>
           ResponseString(other.mkString("/"))
       }
+    case Path(Seg("3-1"::rest)) =>
+      rest match {
+        case List("Option1") =>
+          val directory = new File("存在しないディレクトリ")
+          def myListFiles(directory: File): Option[Array[File]] =
+            Option(directory.listFiles())
+          val maybeFiles = myListFiles(directory)
 
-    case Path(Seg(p :: p2 :: Nil)) =>
+          ResponseString("")
+
+        case List("Option2") =>
+          def fileSize(file: File): Option[Long] =
+            if (file.exists()) Option(file.length()) else None
+
+          val maybeFile = Option(new File("abc.txt"))
+
+          maybeFile
+            .flatMap(fileSize)
+            .map(_.toString)
+            .foreach(println)
+
+          def plus(option1: Option[Int], option2: Option[Int]): Option[Int] =
+            option1.flatMap(i => option2.map(j => i + j))
+
+          plus(Option(2), Option(3))
+              .foreach(println)
+
+          plus(Option(2), None)
+              .foreach(println)
+
+          plus(None, Option(2))
+            .foreach(println)
+
+          plus(None, None)
+            .foreach(println)
+
+          ResponseString("done.")
+
+        case List("Option3") =>
+          def plus(option1: Option[Int], option2: Option[Int]): Option[Int] =
+            for(i <- option1; j<-option2)yield i+j
+
+
+          plus(Option(2), Option(3))
+            .foreach(println)
+
+          plus(Option(2), None)
+            .foreach(println)
+
+          plus(None, Option(2))
+            .foreach(println)
+
+          plus(None, None)
+            .foreach(println)
+
+          def getIntOrZero(option: Option[Int]):Int = option.getOrElse(0)
+          println(getIntOrZero(Option(123)))
+          println(getIntOrZero(None))
+
+
+
+          ResponseString("done.")
+
+        case List("Option4") =>
+          def plus(option1: Option[Int], option2: Option[Int]): Option[Int] =
+            for(i <- option1; j<-option2)yield i+j
+          plus(Option(2), Option(3))
+            .foreach(println)
+
+          plus(Option(2), Option(3)) match{
+            case Some(v) => println(v)
+            case None =>
+          }
+
+          plus(Option(2), None)
+            .foreach(println)
+
+          plus(None, Option(2))
+            .foreach(println)
+
+          plus(None, None)
+            .foreach(println)
+
+          def getIntOrZero(option: Option[Int]):Int = option match{
+            case Some(v) => v
+            case None => 0
+          }
+
+          println(getIntOrZero(Option(123)))
+          println(getIntOrZero(None))
+
+          ResponseString("done.")
+
+
+      }
+
+
+
+
+        case Path(Seg(p :: p2 :: Nil)) =>
       val name = "Scala"
 //      name = "Java"
       val printer = new Printer
