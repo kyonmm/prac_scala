@@ -8,6 +8,7 @@ import unfiltered.directives._
 import Directives._
 
 import scala.collection.mutable
+import scala.util.Try
 
 class Printer {
   def echo(str: String) : Unit = println(str)
@@ -313,7 +314,61 @@ object ExampleApp {
 
 
       }
+    case Path(Seg("3-2"::rest)) =>
+      rest match {
+        case List("FileSize1") =>
+          def fileSize(file: File): Either[String, Long] =
+          if(file.exists()) Right(file.length()) else Left("File not exists")
+        ResponseString(fileSize(new File("")).toString)
 
+        case List("FileSize2") =>
+          val r:Either[String, Int] = Right(100)
+          r.foreach(println)
+          r.left.foreach(println)
+          val l:Either[String, Int] = Left("Hello")
+          l.foreach(println)
+          l.left.foreach(println)
+          ResponseString("")
+
+        case List("FileSize3") =>
+          val r:Either[String, Long] = Right(1)
+          println(r.map(_ * 2).toString)
+          println(r.right.map(_ * 2).toString)
+          println(r.left.map(_ + "!").toString)
+          ResponseString("")
+
+        case List("FileSize4") =>
+          val r:Either[String, Long] = Right(100)
+          println(r.flatMap(l => Right(l * 5)).toString)
+          println(r.flatMap(_ => Left("Error")).toString)
+          val l1: Either[String, Long] = Left("Error 1")
+          println(l1.flatMap(l => Right(l * 5)).toString)
+          ResponseString("")
+
+        case List("FileSize5") =>
+          val value1 = Right(1).getOrElse(100)
+          println(value1)
+          val value2 = Left("foo").getOrElse(100)
+          println(value2)
+          ResponseString("")
+
+        case List("FileSize6") =>
+          val intEither = Right(123)
+          println(intEither.merge)
+          val stringEither : Either[String, String] = Left("foo")
+          println(stringEither.merge)
+          ResponseString("")
+      }
+    case Path(Seg("3-3"::rest)) =>
+      rest match {
+        case List("Try") =>
+          def div(a: Int,b: Int): Try[Int] = Try(a/b)
+          println(div(10,3).toString())
+          println(div(10,0).toString())
+          println(div(10,0).recover{case e: ArithmeticException => 0})
+          println(div(10,0).recoverWith{case e: ArithmeticException => Try(1 + 1)})
+          ResponseString("")
+      }
 
 
 
@@ -829,10 +884,10 @@ object ExampleApp {
 /** embedded server */
 object Server {
   def main(args: Array[String]): Unit = {
-    unfiltered.jetty.Server.anylocal.context("/assets") {
+    unfiltered.jetty.Server.local(8081).context("/assets") {
       _.resources(new java.net.URL(getClass().getResource("/www/css"), "."))
     }.plan(ExampleApp.intent).run({ svr =>
-      unfiltered.util.Browser.open(svr.portBindings.head.url + "/a/b")
+      unfiltered.util.Browser.open(svr.portBindings.head.url + "/")
     })
   }
 }
